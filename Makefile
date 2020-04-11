@@ -1,6 +1,6 @@
 
-CFLAGS = -std=c++11 -lstdc++ -Wall -I/home/st/zhengxing/cpsc5300/sql-parser/src -L/usr/local/db6/lib
+CFLAGS = -std=c++11 -lstdc++ -Wall -I/usr/local/db6/include -L/usr/local/db6/lib
 
 all:
-	$(CXX) $(CFLAGS) sqlShell.cpp -o sqlshell -lsqlshell
+	$(CXX) $(CFLAGS) sqlShell.cpp -o sqlshell -lsqlparser
 
