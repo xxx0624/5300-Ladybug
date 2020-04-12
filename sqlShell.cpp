@@ -5,9 +5,10 @@
 #include <iostream>
 
 #include "db_cxx.h"
-#include "mySQLParser.h"
 #include "sqlhelper.h"
 #include "SQLParser.h"
+#include "mySQLParser.h"
+#include "mySQLParser.cpp"
 
 std::string stringToUpper(std::string oString){
     for(int i = 0; i < oString.length(); i++){
@@ -46,7 +47,7 @@ int main(int argc, char *argv[]) {
         } else {
             for (uint i = 0; i < result->size(); ++i) {
                 hsql::printStatementInfo(result->getStatement(i));
-                //std::cout << myhsql::sqlStatementToString(result->getStatement(i)) << std::endl;
+                std::cout << myhsql::sqlStatementToString(result->getStatement(i)) << std::endl;
             }
         }
         delete result;
