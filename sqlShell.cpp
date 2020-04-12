@@ -1,16 +1,15 @@
+#include <stdio.h>
 #include <stdlib.h>
-#include <string>
+#include <string.h>
 #include <sys/types.h>
 #include <iostream>
 
-#include "SQLParser.h"
-#include "sqlhelper.h"
 #include "db_cxx.h"
+#include "mySQLParser.h"
+#include "sqlhelper.h"
+#include "SQLParser.h"
 
-using namespace std;
-
-
-string stringToUpper(string oString){
+std::string stringToUpper(std::string oString){
     for(int i = 0; i < oString.length(); i++){
         oString[i] = toupper(oString[i]);
     }
@@ -23,30 +22,31 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     const char *home = getenv("HOME");
-	string envdir = string(home) + "/" + argv[1];
-    cout << "(sqlshell: running with database environment at " + envdir + ")" << endl;
+	std::string envdir = std::string(home) + "/" + argv[1];
+    std::cout << "(sqlshell: running with database environment at " + envdir + ")" << std::endl;
 
     DbEnv env(0U);
-	env.set_message_stream(&cout);
-	env.set_error_stream(&cerr);
+	env.set_message_stream(&std::cout);
+	env.set_error_stream(&std::cerr);
 	env.open(envdir.c_str(), DB_CREATE | DB_INIT_MPOOL, 0);
 
     while(true) {
-        cout << "SQL>";
-        string query;
-        getline(cin, query);
+        std::cout << "SQL>";
+        std::string query;
+        getline(std::cin, query);
         if(stringToUpper(query) == "QUIT"){
-            cout << "quit" << endl;
+            std::cout << "quit" << std::endl;
             env.close(0U);
             return 0;
         }
         // parse the given query
         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
         if (!result->isValid()) {
-            cout << "Invalid SQL: " << query << endl;
+            std::cout << "Invalid SQL: " << query << std::endl;
         } else {
             for (uint i = 0; i < result->size(); ++i) {
                 hsql::printStatementInfo(result->getStatement(i));
+                //std::cout << myhsql::sqlStatementToString(result->getStatement(i)) << std::endl;
             }
         }
         delete result;

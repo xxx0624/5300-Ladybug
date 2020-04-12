@@ -1,8 +1,10 @@
 #CFLAGS = -std=c++11 -lstdc++ -Wall -I/usr/local/db6/include -L/usr/local/db6/lib
+#mysqlparser:
+#	$(CXX) $(CFLAGS) -o mysqlparser mySQLParser.h mySQLParser.cpp -lsqlparser
 #all:
-#	$(CXX) $(CFLAGS) sqlShell.cpp -o sqlshell -lsqlparser
+#	$(CXX) $(CFLAGS) sqlShell.cpp -o sqlshell -lsqlparser -ldb_cxx
 
-sqlshell: sqlShell.o
+sqlshell: sqlShell.o mysqlparser.o
 	g++ -L/usr/local/db6/lib -o $@ $< -ldb_cxx -lsqlparser
 
 sqlShell.o : sqlShell.cpp
