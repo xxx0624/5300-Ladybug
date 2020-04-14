@@ -40,13 +40,15 @@ int main(int argc, char *argv[]) {
     }
 
     while(true) {
-        std::cout << "SQL>";
+        std::cout << "SQL> ";
         std::string query;
         getline(std::cin, query);
+        if(query.length() == 0){
+            continue;
+        }
         if(stringToUpper(query) == "QUIT"){
             std::cout << "quit" << std::endl;
-            env.close(0U);
-            return 0;
+            break;
         }
         // parse the given query
         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
@@ -56,8 +58,11 @@ int main(int argc, char *argv[]) {
             for (uint i = 0; i < result->size(); ++i) {
                 hsql::printStatementInfo(result->getStatement(i));
                 std::cout << myhsql::sqlStatementToString(result->getStatement(i)) << std::endl;
+                std::cout << "Valid SQL" << std::endl;
             }
         }
         delete result;
     }
+    env.close(0U);
+    return EXIT_SUCCESS;
 }
