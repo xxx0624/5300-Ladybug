@@ -1,4 +1,7 @@
-#include <stdio.h>
+/*
+ * @file sql5300.cpp main entry for relational db
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -19,8 +22,8 @@ std::string stringToUpper(std::string oString){
 
 int main(int argc, char *argv[]) {
     if(argc <= 1){
-        fprintf(stderr, "Usage: ./sqlshell cpsc5300/data\n");
-        return -1;
+        std::cerr << "Usage: ./sql5300 cpsc5300/data" << std::endl;
+        return EXIT_FAILURE;
     }
     const char *home = getenv("HOME");
 	std::string envdir = std::string(home) + "/" + argv[1];
@@ -29,7 +32,12 @@ int main(int argc, char *argv[]) {
     DbEnv env(0U);
 	env.set_message_stream(&std::cout);
 	env.set_error_stream(&std::cerr);
-	env.open(envdir.c_str(), DB_CREATE | DB_INIT_MPOOL, 0);
+    try{
+	    env.open(envdir.c_str(), DB_CREATE | DB_INIT_MPOOL, 0);
+    } catch (DbException& e){
+        std::cerr << "sql5300: create db env error: " << e.what() << std::endl;
+        exit(1);
+    }
 
     while(true) {
         std::cout << "SQL>";
