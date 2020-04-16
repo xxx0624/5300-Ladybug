@@ -80,7 +80,7 @@ namespace myhsql{
                     if(idx == 0){
                         res << tableRefToString(tbl);
                     } else {
-                        res << " " << tableRefToString(tbl);
+                        res << ", " << tableRefToString(tbl);
                     }
                     idx ++;
                 }
@@ -144,7 +144,7 @@ namespace myhsql{
         res << " FROM ";
         res << tableRefToString(stmt->fromTable);
         if (stmt->whereClause != NULL) {
-            res << "WHERE " << exprToString(stmt->whereClause);
+            res << " WHERE " << exprToString(stmt->whereClause);
         }
         return res.str();
     }
