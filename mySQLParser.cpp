@@ -5,10 +5,11 @@
 #include "mySQLParser.h"
 
 using namespace hsql;
+using namespace std;
 
 namespace myhsql{
 
-    std::string operatorExpressionToString(Expr* expr){
+    string operatorExpressionToString(Expr* expr){
         if(expr == NULL){
             return "NULL";
         }
@@ -26,8 +27,8 @@ namespace myhsql{
         }
     }
 
-    std::string tableRefToString(TableRef* table){
-        std::stringstream res;
+    string tableRefToString(TableRef* table){
+        stringstream res;
         switch (table->type) {
             case kTableName:
                 res << table->name;
@@ -53,20 +54,19 @@ namespace myhsql{
             break;
         }
         if (table->alias != NULL) {
-            res << " ";
-            res << "AS" << " " << table->alias;
+            res << " AS " << table->alias;
         }
         return res.str();
     }
 
-    std::string createStatementToString(const CreateStatement* stmt){
-        std::stringstream res;
+    string createStatementToString(const CreateStatement* stmt){
+        stringstream res;
         res << "CREATE TABLE " << stmt->tableName;
         return res.str();
     }
 
-    std::string exprToString(Expr* expr){
-        std::string res = "";
+    string exprToString(Expr* expr){
+        string res = "";
         switch (expr->type) {
             case kExprStar:
                 res = "*";
@@ -101,8 +101,8 @@ namespace myhsql{
         return res;
     }
 
-    std::string selectStatementToString(const SelectStatement* stmt){
-        std::stringstream res;
+    string selectStatementToString(const SelectStatement* stmt){
+        stringstream res;
         res << "SELECT" << " ";
         int idx = stmt->selectList->size();
         for(Expr* expr : *stmt->selectList){
@@ -114,9 +114,7 @@ namespace myhsql{
             idx--;
         }
         res << " FROM ";
-        res << stmt->fromTable->name;
-        //res << stmt->fromTable->getName(); works in the same way
-        
+        res << tableRefToString(stmt->fromTable);
         if (stmt->whereClause != NULL) {
             res << "WHERE " << exprToString(stmt->whereClause);
         }
@@ -124,7 +122,7 @@ namespace myhsql{
         return res.str();
     }
 
-    std::string sqlStatementToString(const SQLStatement* stmt){
+    string sqlStatementToString(const SQLStatement* stmt){
         switch (stmt->type()){
             case kStmtSelect:
             return selectStatementToString((const SelectStatement*) stmt);
