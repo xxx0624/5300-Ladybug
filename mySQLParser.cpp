@@ -103,16 +103,20 @@ namespace myhsql{
 
     std::string selectStatementToString(const SelectStatement* stmt){
         std::stringstream res;
-        res << "SELECT";
-        int idx = 0;
+        res << "SELECT" << " ";
+        int idx = stmt->selectList->size();
         for(Expr* expr : *stmt->selectList){
-            if(idx == 0){
-                res << " " << exprToString(expr);
+            if(idx < 2){
+                res << exprToString(expr);
             } else {
-                res << ", " << exprToString(expr);
+              res << exprToString(expr) << ", ";
             }
+            idx--;
         }
         res << " FROM ";
+        res << stmt->fromTable->name;
+        //res << stmt->fromTable->getName(); works in the same way
+        
         if (stmt->whereClause != NULL) {
             res << "WHERE " << exprToString(stmt->whereClause);
         }
