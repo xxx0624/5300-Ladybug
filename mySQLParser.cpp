@@ -13,18 +13,29 @@ namespace myhsql{
         if(expr == NULL){
             return "NULL";
         }
+
+        stringstream res;
+        if(expr->opType == Expr::NOT){
+            res << "NOT";
+        }
+        res << exprToString(expr->expr) << " ";
         switch(expr->opType){
         case Expr::SIMPLE_OP:
-            return "" + expr->opChar;
+            res << expr->opChar;
+            break;
         case Expr::AND:
-            return "AND";
+            res << "AND";
+            break;
         case Expr::OR:
-            return "OR";
-        case Expr::NOT:
-            return "NOT";
+            res <<  "OR";
+            break;
         default:
-            return "OTHEROP";
+            break;
         }
+        if(expr->expr2 != NULL){
+            res << " " << exprToString(expr->expr2);
+        }
+        return res.str();
     }
 
     string tableRefToString(TableRef* table){
@@ -32,14 +43,36 @@ namespace myhsql{
         switch (table->type) {
             case kTableName:
                 res << table->name;
+                if (table->alias != NULL) {
+                    res << " AS " << table->alias;
+                }
                 break;
             case kTableSelect:
                 res << selectStatementToString(table->select);
                 break;
             case kTableJoin:
-                res << "LEFT JOIN" << " " << tableRefToString(table->join->left) \ 
-                    << " " << "RIGHT JOIN" << " " << tableRefToString(table->join->right) \
-                    << " " << "ON" << " " + exprToString(table->join->condition);
+                res << tableRefToString(table->join->left);
+                switch (table->join->type){
+                    case kJoinCross:
+                    case kJoinInner:
+                        res << " JOIN ";
+                        break;
+                    case kJoinOuter:
+                    case kJoinLeftOuter:
+                    case kJoinLeft:
+                        res << " LEFT JOIN ";
+                        break;
+                    case kJoinRightOuter:
+                    case kJoinRight:
+                        res << " RIGHT JOIN ";
+                        break;
+                    case kJoinNatural:
+                        res << " NATURAL JOIN ";
+                        break; 
+                }
+                res << tableRefToString(table->join->right);
+                if(table->join->condition != NULL)
+                    res << " ON " << exprToString(table->join->condition);
                 break;
             case kTableCrossProduct:
                 int idx = 0;
@@ -47,14 +80,11 @@ namespace myhsql{
                     if(idx == 0){
                         res << tableRefToString(tbl);
                     } else {
-                        res << " " << tableRefToString(tbl);
+                        res << ", " << tableRefToString(tbl);
                     }
                     idx ++;
                 }
-            break;
-        }
-        if (table->alias != NULL) {
-            res << " AS " << table->alias;
+                break;
         }
         return res.str();
     }
@@ -66,39 +96,37 @@ namespace myhsql{
     }
 
     string exprToString(Expr* expr){
-        string res = "";
+        stringstream res;
         switch (expr->type) {
             case kExprStar:
-                res = "*";
+                res << "*";
                 break;
             case kExprColumnRef:
-                res = expr->name;
+                if (expr->table != NULL){
+                    res << expr->table << ".";
+                }
+            case kExprLiteralString:
+                res << expr->name;
                 break;
             case kExprLiteralFloat:
-                res = expr->fval;
+                res << to_string(expr->fval);
                 break;
             case kExprLiteralInt:
-                res = expr->ival;
+                res << to_string(expr->ival);
                 break;
-            case kExprLiteralString:
-                res = expr->name;
+            case kExprFunctionRef:
+                res << expr->name << "?" << expr->expr->name;
                 break;
-            // TODO
-            // case kExprFunctionRef:
-            // inprint(expr->name, numIndent);
-            // inprint(expr->expr->name, numIndent + 1);
-            // break;
             case kExprOperator:
-                res = operatorExpressionToString(expr);
+                res << operatorExpressionToString(expr);
                 break;
             default:
                 fprintf(stderr, "Unrecognized expression type %d\n", expr->type);
         }
-        // if (expr->alias != NULL) {
-        //     inprint("Alias", numIndent + 1);
-        //     inprint(expr->alias, numIndent + 2);
-        // }
-        return res;
+        if (expr->alias != NULL) {
+            res << " AS " << expr->alias;
+        }
+        return res.str();
     }
 
     string selectStatementToString(const SelectStatement* stmt){
@@ -116,9 +144,8 @@ namespace myhsql{
         res << " FROM ";
         res << tableRefToString(stmt->fromTable);
         if (stmt->whereClause != NULL) {
-            res << "WHERE " << exprToString(stmt->whereClause);
+            res << " WHERE " << exprToString(stmt->whereClause);
         }
-        //TODO: other expressions
         return res.str();
     }
 
