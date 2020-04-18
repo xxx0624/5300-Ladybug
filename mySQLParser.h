@@ -1,8 +1,13 @@
+/**
+ * @file   mySQLParser.h
+ * @brief  Interfaces used to parse kinds of statements
+ * @author Ethan Guttman, XingZheng
+ */
+
 #ifndef __MYSQLPARSER_H__
 #define __MYSQLPARSER_H__
 
 #include "sql/statements.h"
-
 using namespace hsql;
 
 namespace myhsql{
