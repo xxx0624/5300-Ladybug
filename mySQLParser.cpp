@@ -1,14 +1,26 @@
+/**
+ * @file   mySQLParser.cpp
+ * @brief  Implements the interfaces of mySQLParser.h
+ * 
+ * This contains a lot of methods used to parse kinds of statements from hsql lib
+ *
+ * @authors Ethan Guttman, XingZheng
+ */
+
 #include <sstream>
 #include <string>
 #include <stdio.h>
-
 #include "mySQLParser.h"
-
 using namespace hsql;
 using namespace std;
 
+
 namespace myhsql{
 
+    /** @brief convert Operator Expr statment into string
+    *  @param  Operator Expr statment
+    *  @return string
+    */
     string operatorExpressionToString(Expr* expr){
         if(expr == NULL){
             return "NULL";
@@ -38,6 +50,10 @@ namespace myhsql{
         return res.str();
     }
 
+    /** @brief convert TableRef statment into string
+    *  @param  TableRef statment
+    *  @return string
+    */
     string tableRefToString(TableRef* table){
         stringstream res;
         switch (table->type) {
@@ -124,6 +140,10 @@ namespace myhsql{
         return res.str();
     }
 
+    /** @brief convert Expr statment into string
+    *  @param  Expr statment
+    *  @return string
+    */
     string exprToString(Expr* expr){
         stringstream res;
         switch (expr->type) {
@@ -158,6 +178,10 @@ namespace myhsql{
         return res.str();
     }
 
+    /** @brief convert Select statment into string
+    *  @param  Select statment
+    *  @return string
+    */
     string selectStatementToString(const SelectStatement* stmt){
         stringstream res;
         res << "SELECT" << " ";
@@ -177,6 +201,10 @@ namespace myhsql{
         return res.str();
     }
 
+    /** @brief convert SQL statment into string
+    *  @param  SQL statment
+    *  @return string
+    */
     string sqlStatementToString(const SQLStatement* stmt){
         switch (stmt->type()){
             case kStmtSelect:
