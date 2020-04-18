@@ -56,9 +56,9 @@ int main(int argc, char *argv[]) {
             std::cout << "Invalid SQL: " << query << std::endl;
         } else {
             for (uint i = 0; i < result->size(); ++i) {
-                hsql::printStatementInfo(result->getStatement(i));
+                //hsql::printStatementInfo(result->getStatement(i));
                 std::cout << myhsql::sqlStatementToString(result->getStatement(i)) << std::endl;
-                std::cout << "Valid SQL" << std::endl;
+                //std::cout << "Valid SQL" << std::endl;
             }
         }
         delete result;

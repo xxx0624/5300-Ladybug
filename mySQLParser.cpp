@@ -88,10 +88,39 @@ namespace myhsql{
         }
         return res.str();
     }
+	
+	string columnDefToString(const ColumnDefinition *col){
+		string ret = col->name;
+		ret += " ";
+		switch (col->type){
+			case ColumnDefinition::INT:
+				ret += "INT";
+				break;
+			case ColumnDefinition::DOUBLE:
+				ret += "DOUBLE";
+				break;
+			case ColumnDefinition::TEXT:
+				ret += "TEXT";
+				break;
+			default:
+				ret += "...";
+				break;
+		}
+		return ret;
+	}
 
     string createStatementToString(const CreateStatement* stmt){
-        stringstream res;
-        res << "CREATE TABLE " << stmt->tableName;
+		stringstream res;
+		res << "CREATE TABLE " << stmt->tableName << " (";
+		int idx = stmt->columns->size();
+		for(ColumnDefinition *col : *stmt->columns){
+			res << columnDefToString(col);
+			if(idx > 1){
+				res << ", ";
+			}
+			idx--;
+        }
+        res << ")";
         return res.str();
     }
 
@@ -134,10 +163,9 @@ namespace myhsql{
         res << "SELECT" << " ";
         int idx = stmt->selectList->size();
         for(Expr* expr : *stmt->selectList){
-            if(idx < 2){
-                res << exprToString(expr);
-            } else {
-              res << exprToString(expr) << ", ";
+            res << exprToString(expr);
+            if(idx > 1){
+                res << ", ";
             }
             idx--;
         }

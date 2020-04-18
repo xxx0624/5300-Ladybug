@@ -10,6 +10,8 @@ namespace myhsql{
     std::string operatorExpressionToString(Expr* expr);
 
     std::string tableRefToString(TableRef* table);
+	
+	std::string columnDefToString(const ColumnDefinition *col);
 
     std::string createStatementToString(const CreateStatement* stmt);
 
