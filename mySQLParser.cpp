@@ -17,8 +17,8 @@ using namespace std;
 
 namespace myhsql{
 
-    /** @brief convert Operator Expr statment into string
-    *  @param  Operator Expr statment
+    /** @brief convert Operator Expr statement into string
+    *  @param  Operator Expr statement
     *  @return string
     */
     string operatorExpressionToString(Expr* expr){
@@ -50,8 +50,8 @@ namespace myhsql{
         return res.str();
     }
 
-    /** @brief convert TableRef statment into string
-    *  @param  TableRef statment
+    /** @brief convert TableRef statement into string
+    *  @param  TableRef statement
     *  @return string
     */
     string tableRefToString(TableRef* table){
@@ -105,6 +105,10 @@ namespace myhsql{
         return res.str();
     }
 	
+	/** @brief convert ColumnDefinition into string
+    *  @param  ColumnDefinition variable
+    *  @return string
+    */
 	string columnDefToString(const ColumnDefinition *col){
 		string ret = col->name;
 		ret += " ";
@@ -124,7 +128,11 @@ namespace myhsql{
 		}
 		return ret;
 	}
-
+	
+	/** @brief convert Create statement into string
+    *  @param  Create statement
+    *  @return string
+    */
     string createStatementToString(const CreateStatement* stmt){
 		stringstream res;
 		res << "CREATE TABLE " << stmt->tableName << " (";
@@ -140,8 +148,8 @@ namespace myhsql{
         return res.str();
     }
 
-    /** @brief convert Expr statment into string
-    *  @param  Expr statment
+    /** @brief convert Expr statement into string
+    *  @param  Expr statement
     *  @return string
     */
     string exprToString(Expr* expr){
@@ -178,8 +186,8 @@ namespace myhsql{
         return res.str();
     }
 
-    /** @brief convert Select statment into string
-    *  @param  Select statment
+    /** @brief convert Select statement into string
+    *  @param  Select statement
     *  @return string
     */
     string selectStatementToString(const SelectStatement* stmt){
@@ -201,8 +209,8 @@ namespace myhsql{
         return res.str();
     }
 
-    /** @brief convert SQL statment into string
-    *  @param  SQL statment
+    /** @brief convert SQL statement into string
+    *  @param  SQL statement
     *  @return string
     */
     string sqlStatementToString(const SQLStatement* stmt){
