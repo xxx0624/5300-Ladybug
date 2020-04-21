@@ -13,6 +13,7 @@
 #include "SQLParser.h"
 #include "mySQLParser.h"
 #include "mySQLParser.cpp"
+#include "heap_storage.h"
 using namespace std;
 
 
@@ -67,6 +68,12 @@ int main(int argc, char *argv[]) {
             cout << "quit" << endl;
             break;
         }
+
+        if(query == "test"){
+            cout << "test_heap_storage: " << (test_heap_storage() ? "ok" : "failed") << endl;
+            continue;
+        }
+
         // parse the given query, if invalid stop and if valid translate
         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
         if (!result->isValid()) {
