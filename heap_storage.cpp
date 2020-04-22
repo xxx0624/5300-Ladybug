@@ -41,12 +41,35 @@ RecordID SlottedPage::add(const Dbt* data) {
 }
 
 Dbt* SlottedPage::get(RecordID record_id){
-    // TODO
-	return NULL;
+    u16 loc, size;
+    get_header(size, loc, record_id);
+    if(loc == 0){
+        // tombstone
+        return NULL;
+    }
+    char *right_size_bytes = new char[size];
+    memcpy(right_size_bytes, this->address(loc), size);
+    Dbt* r = new Dbt(right_size_bytes, size);
+    return r;
 }
 
 void SlottedPage::put(RecordID record_id, const Dbt &data){
-	// TODO
+	u16 loc, size;
+    get_header(size, loc, record_id);
+    u16 new_size = data.get_size();
+    if(new_size > size){
+        u16 extra = new_size - size;
+        if(!has_room(extra)){
+            throw DbBlockNoRoomError("not enough room for new record");
+        }
+        slide(loc + new_size, loc + size);
+        memcpy(this->address(loc - extra), data.get_data(), new_size);
+    } else {
+        memcpy(this->address(loc), data.get_data(), new_size);
+        slide(loc + new_size, loc + size);
+    }
+    get_header(size, loc, record_id);
+    put_header(record_id, new_size, loc);
 }
 
 void SlottedPage::del(RecordID record_id){
@@ -57,7 +80,13 @@ void SlottedPage::del(RecordID record_id){
 }
 
 RecordIDs* SlottedPage::ids(void){
-    // TODO
+    RecordIDs *allIDs ;
+    for(int i = 1; i < this->num_records + 1; i ++){
+        if(get(i) != NULL){
+            allIDs->push_back(i);
+        }
+    }
+    return allIDs;
 }
 
 // Get 2-byte integer at given offset in block.
@@ -71,7 +100,28 @@ void SlottedPage::put_n(u16 offset, u16 n) {
 }
 
 void SlottedPage::slide(u16 start, u16 end){
-	
+	u16 shift = end - start;
+    if(shift == 0){
+        return ;
+    }
+
+    // slide data
+    memcpy(this->address(this->end_free + 1), this->address(this->end_free + 1 + shift), end - this->end_free - shift);
+
+    RecordIDs *allIDs = ids();
+    auto it = allIDs->begin();
+    while(it != allIDs->end()){
+        u16 id = *it;
+        u16 size, loc;
+        get_header(size, loc, id);
+        if(loc <= start){
+            loc += shift;
+            put_header(id, size, loc);
+        }
+        it ++;
+    }
+    this->end_free += shift;
+    put_header();
 }
 
 // Make a void* pointer for a given offset into the data block.
