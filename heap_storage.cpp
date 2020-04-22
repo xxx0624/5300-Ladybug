@@ -4,14 +4,18 @@
 #include <map>
 #include <utility>
 #include <vector>
+using namespace std;
+
+
+typedef u_int16_t u16;
+typedef u_int32_t u32;
+
+
 bool test_heap_storage() {
-	std::cout << "hello test" << std::endl;
+	cout << "hello test" << endl;
 	return true;
 }
-/* FIXME FIXME FIXME */
-typedef u_int16_t u16;
 
-/*****************************************Slotted Page***************************************************************/
 SlottedPage::SlottedPage(Dbt &block, BlockID block_id, bool is_new) : DbBlock(block, block_id, is_new) {
     if (is_new) {
         this->num_records = 0;
@@ -22,9 +26,8 @@ SlottedPage::SlottedPage(Dbt &block, BlockID block_id, bool is_new) : DbBlock(bl
     }
 }
 
-
 // Add a new record to the block. Return its id.
-RecordID SlottedPage::add(const Dbt* data) throw(DbBlockNoRoomError) {
+RecordID SlottedPage::add(const Dbt* data) {
     if (!has_room(data->get_size()))
         throw DbBlockNoRoomError("not enough room for new record");
     u16 id = ++this->num_records;
@@ -37,20 +40,13 @@ RecordID SlottedPage::add(const Dbt* data) throw(DbBlockNoRoomError) {
     return id;
 }
 
-/*Dbt* SlottedPage::get(RecordID record_id){
-	u16 size, loc;
-	get_header(size, loc, record_id);
-	if (loc == 0){return NULL;}
-	//return get();
-	
-}*/
+Dbt* SlottedPage::get(RecordID record_id){
+    // TODO
+	return NULL;
+}
 
 void SlottedPage::put(RecordID record_id, const Dbt &data){
-	u16 size, loc;
-	u_int32_t newSize;
-	get_header(size, loc, record_id);
-	newSize = data.get_ulen();
-	
+	// TODO
 }
 
 void SlottedPage::del(RecordID record_id){
@@ -60,10 +56,9 @@ void SlottedPage::del(RecordID record_id){
 	slide(loc, loc + size);
 }
 
-/*RecordIDs* SlottedPage::ids(void){
-	RecordIDs * recordIdenList;
-	
-}*/
+RecordIDs* SlottedPage::ids(void){
+    // TODO
+}
 
 // Get 2-byte integer at given offset in block.
 u16 SlottedPage::get_n(u16 offset) {
@@ -75,7 +70,7 @@ void SlottedPage::put_n(u16 offset, u16 n) {
     *(u16*)this->address(offset) = n;
 }
 
-void SlottedPage::slide(u_int16_t start, u_int16_t end){
+void SlottedPage::slide(u16 start, u16 end){
 	
 }
 
@@ -94,7 +89,7 @@ void SlottedPage::put_header(RecordID id, u16 size, u16 loc) {
     put_n(4*id + 2, loc);
 }
 
-void SlottedPage::get_header(u_int16_t &size, u_int16_t &loc, RecordID id){
+void SlottedPage::get_header(u16 &size, u16 &loc, RecordID id){
 	size = get_n(4 * id);
     loc = get_n(4 * id + 2);
 }
@@ -105,13 +100,14 @@ bool SlottedPage::has_room(u16 size){
     return size <= available;
 }
 
+
 /*****************************************Heap File***************************************************************/
 
 // Allocate a new block for the database file.
 // Returns the new empty DbBlock that is managing the records in this block and its block id.
 SlottedPage* HeapFile::get_new(void) {
-    char block[DB_BLOCK_SZ];
-    std::memset(block, 0, sizeof(block));
+    char block[SlottedPage::BLOCK_SZ];
+    memset(block, 0, sizeof(block));
     Dbt data(block, sizeof(block));
 
     int block_id = ++this->last;
