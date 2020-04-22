@@ -65,7 +65,8 @@ protected:
     u_int16_t end_free;
 
     virtual void get_header(u_int16_t &size, u_int16_t &loc, RecordID id = 0){
-        return get_n(4 * id), get_n(4 * id + 2);
+        size = get_n(4 * id)；
+        loc = get_n(4 * id + 2);
     }
 
     virtual void put_header(RecordID id = 0, u_int16_t size = 0, u_int16_t loc = 0){
