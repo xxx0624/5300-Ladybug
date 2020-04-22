@@ -28,7 +28,15 @@
  */
 class SlottedPage : public DbBlock {
 public:
-    SlottedPage(Dbt &block, BlockID block_id, bool is_new = false);
+    SlottedPage(Dbt &block, BlockID block_id, bool is_new = false): DbBlock(block, block_id, is_new){
+        if(is_new){
+            this->num_records = 0;
+            this->end_free = DbBlock::BLOCK_SZ - 1;
+            put_header();
+        } else {
+            get_header(this->num_records, this->end_free);
+        }
+    }
 
     // Big 5 - we only need the destructor, copy-ctor, move-ctor, and op= are unnecessary
     // but we delete them explicitly just to make sure we don't use them accidentally
@@ -56,19 +64,38 @@ protected:
     u_int16_t num_records;
     u_int16_t end_free;
 
-    virtual void get_header(u_int16_t &size, u_int16_t &loc, RecordID id = 0);
+    virtual void get_header(u_int16_t &size, u_int16_t &loc, RecordID id = 0){
+        size = get_n(4 * id)；
+        loc = get_n(4 * id + 2);
+    }
 
-    virtual void put_header(RecordID id = 0, u_int16_t size = 0, u_int16_t loc = 0);
+    virtual void put_header(RecordID id = 0, u_int16_t size = 0, u_int16_t loc = 0){
+        if(id == 0){
+            size = this->num_records;
+            loc = this->end_free;
+        }
+        put_n(4*id, size);
+        put_n(4*id + 2, loc);
+    }
 
-    virtual bool has_room(u_int16_t size);
+    virtual bool has_room(u_int16_t size){
+        available = this->end_free - (this->num_records + 1) * 4;
+        return size <= available;
+    }
 
     virtual void slide(u_int16_t start, u_int16_t end);
 
-    virtual u_int16_t get_n(u_int16_t offset);
+    virtual u_int16_t get_n(u_int16_t offset){
+        return *(u16*)this->address(offset);
+    }
 
-    virtual void put_n(u_int16_t offset, u_int16_t n);
+    virtual void put_n(u_int16_t offset, u_int16_t n){
+        *(u_int16_t)this->address(offset) = n;
+    }
 
-    virtual void *address(u_int16_t offset);
+    virtual void *address(u_int16_t offset){
+        return (void*)((char*)this->block.get_data() + offset);
+    }
 };
 
 /**
