@@ -80,7 +80,7 @@ void SlottedPage::del(RecordID record_id){
 }
 
 RecordIDs* SlottedPage::ids(void){
-    RecordIDs *allIDs ;
+    RecordIDs *allIDs = new RecordIDs();
     for(int i = 1; i < this->num_records + 1; i ++){
         if(get(i) != NULL){
             allIDs->push_back(i);
@@ -106,7 +106,12 @@ void SlottedPage::slide(u16 start, u16 end){
     }
 
     // slide data
-    memcpy(this->address(this->end_free + 1), this->address(this->end_free + 1 + shift), end - this->end_free - shift);
+    void *to = this->address((u16)(this->end_free + 1 + shift));
+    void *from = this->address((u16)(this->end_free + 1));
+    int bytes = start - (this->end_free + 1U);
+    char temp[bytes];
+    memcpy(temp, from, bytes);
+    memcpy(to, temp, bytes);
 
     RecordIDs *allIDs = ids();
     auto it = allIDs->begin();
