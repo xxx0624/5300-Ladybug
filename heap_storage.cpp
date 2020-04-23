@@ -109,7 +109,7 @@ void SlottedPage::slide(u16 start, u16 end){
     // slide data
     void *to = this->address((u16)(this->end_free + 1 + shift));
     void *from = this->address((u16)(this->end_free + 1));
-    int bytes = start - (this->end_free + 1U);
+    u16 bytes = start - (this->end_free + 1);
     char temp[bytes];
     memcpy(temp, from, bytes);
     memcpy(to, temp, bytes);
@@ -157,12 +157,49 @@ bool SlottedPage::has_room(u16 size){
 }
 
 
-/*****************************************Heap File***************************************************************/
+/*
+* HeapFile Class
+*/
+
+HeapFile::HeapFile(string name):DbFile(name), dbfilename(""), last(0), closed(true), db(_DB_ENV, 0) {
+    this->dbfilename = this->name + ".db";
+}
+
+void HeapFile::create(void){
+    db_open(DB_CREATE|DB_INIT_MPOOL);
+    get_new();
+}
+
+void HeapFile::drop(void){
+    close();
+    this->db.remove(this->dbfilename.c_str(), nullptr, 0);
+}
+
+void HeapFile::open(void){
+    db_open();
+}
+
+void HeapFile::close(void){
+    this->closed = true;
+    this->db.close(0);
+}
+
+void HeapFile::db_open(uint flags) {
+    if(!this->closed){
+        return ;
+    }
+    this->db.set_re_len(DbBlock::BLOCK_SZ);
+    this->db.open(nullptr, this->dbfilename.c_str(), nullptr, DB_RECNO, flags, 0644);
+    BlockIDs *allIDs = block_ids();
+    this->last = flags ? 0:allIDs->size();
+    this->closed = false;
+    delete allIDs;
+}
 
 // Allocate a new block for the database file.
 // Returns the new empty DbBlock that is managing the records in this block and its block id.
 SlottedPage* HeapFile::get_new(void) {
-    char block[SlottedPage::BLOCK_SZ];
+    char block[DbBlock::BLOCK_SZ];
     memset(block, 0, sizeof(block));
     Dbt data(block, sizeof(block));
 
@@ -176,8 +213,26 @@ SlottedPage* HeapFile::get_new(void) {
     return page;
 }
 
+SlottedPage* HeapFile::get(BlockID block_id){
+    Dbt key(&block_id, sizeof(block_id));
+    Dbt data;
+    this->db.get(nullptr, &key, &data, 0);
+    return new SlottedPage(data, block_id);
+}
 
+void HeapFile::put(DbBlock *block){
+    u16 block_id = block->get_block_id();
+    Dbt key(&block_id, sizeof(block_id));
+    this->db.put(nullptr, &key, block->get_block(), 0);
+}
 
+BlockIDs* HeapFile::block_ids(){
+    BlockIDs *allIDs = new BlockIDs();
+    for(BlockID cID = 1; cID <= this->last; cID ++){
+        allIDs->push_back(cID);
+    }
+    return allIDs;
+}
 
 
 /*****************************************Heap Table***************************************************************/
