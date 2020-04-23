@@ -180,35 +180,45 @@ SlottedPage* HeapFile::get_new(void) {
 
 
 /*****************************************Heap Table***************************************************************/
-//todo: HEAPTABLE METHODS
-/*HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes){
-		
+//todo: HEAPTABLE METHODS insert method
+HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes) : 
+					DbRelation(table_name, column_names, column_attributes),
+					file(table_name){
 }
 
 void HeapTable::create(){
-	
+	this->file.create();
 }
 
 void HeapTable::create_if_not_exists(){
-	
+	try{
+		this->file.open();
+	}catch(DbException &e){
+		create();
+	}
 }
 
 void HeapTable::drop(){
-	
+	this->file.~HeapFile();
 }
 
 void HeapTable::open(){
-	
+	this->file.open();
 }
 
 void HeapTable::close(){
-	
+	this->file.close();
 }
 
 Handle HeapTable::insert(const ValueDict *row){
-	Handles* handles = new Handles();
-	//todo: everything else
-	return handles;
+	Handle handle;
+	Dbt* dbt;
+	dbt = marshal(row);
+	open();
+	
+	
+	
+	return handle;
 }
 
 Handles* HeapTable::select(const ValueDict* where) {
@@ -254,15 +264,5 @@ Dbt* HeapTable::marshal(const ValueDict* row) {
     delete[] bytes;
     Dbt *data = new Dbt(right_size_bytes, offset);
     return data;
-}*/
-
-
-
-
-
-
-
-
-
-
+}
 
