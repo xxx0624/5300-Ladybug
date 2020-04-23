@@ -44,8 +44,6 @@ void init_env(string envdir){
     _DB_ENV = env;
 }
 
-
-
 /**
  *Main entry to sql5300 program
  *@args dbenvpath the path to the BerkeleyDB database environment
@@ -78,6 +76,11 @@ int main(int argc, char *argv[]) {
 
         if(query == "test"){
             cout << "test_heap_storage: \n" << (test_heap_storage() ? "ok" : "failed") << endl;
+            continue;
+        }
+
+        if(query == "test2"){
+            cout << "test_slotted_page: \n" << (test_slotted_page() ? "ok" : "failed") << endl;
             continue;
         }
 

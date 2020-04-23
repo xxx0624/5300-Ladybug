@@ -177,6 +177,4 @@ protected:
 };
 
 bool test_heap_storage();
-bool assertion_failure(std::string message);
 bool test_slotted_page();
-
