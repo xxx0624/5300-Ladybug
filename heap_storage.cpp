@@ -169,9 +169,7 @@ bool SlottedPage::has_room(u16 size){
 }
 
 
-/*
-* HeapFile Class
-*/
+/*****************************************Heap File***************************************************************/
 
 void HeapFile::create(void){
     db_open(DB_CREATE|DB_INIT_MPOOL);
@@ -245,9 +243,9 @@ BlockIDs* HeapFile::block_ids(){
 
 /*****************************************Heap Table***************************************************************/
 
-/** @brief Constructor for HeapTable that initializes variables including HeapFile
-    *  @param  Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes
-    */
+/** @brief  Constructor for HeapTable that initializes variables including HeapFile
+ *  @param  Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes
+ */
 HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes) : 
 					DbRelation(table_name, column_names, column_attributes),
 					file(table_name){
@@ -268,6 +266,7 @@ void HeapTable::create_if_not_exists(){
 		create();
 	}
 }
+
 /** @brief Calls the destructor on the HeapFile the HeapTable contains
     */
 void HeapTable::drop(){
@@ -415,3 +414,28 @@ Dbt* HeapTable::marshal(const ValueDict* row) {
     return data;
 }
 
+// TODO
+Handles* HeapTable::select(){
+    return NULL;
+}
+
+// TODO
+ValueDict* HeapTable::project(Handle handle){
+    return NULL;
+}
+
+// TODO
+ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names){
+    return NULL;
+}
+
+// TODO
+ValueDict* HeapTable::unmarshal(Dbt *data){
+    return NULL;
+}
+
+// TODO
+void HeapTable::update(const Handle handle, const ValueDict *new_values){}
+
+// TODO
+void HeapTable::del(const Handle handle){}
