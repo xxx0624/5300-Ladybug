@@ -47,9 +47,10 @@ Dbt* SlottedPage::get(RecordID record_id){
         // tombstone
         return NULL;
     }
-    char *right_size_bytes = new char[size];
-    memcpy(right_size_bytes, this->address(loc), size);
-    Dbt* r = new Dbt(right_size_bytes, size);
+	//change based on lecture code
+    //char *right_size_bytes = new char[size];
+    //memcpy(right_size_bytes, this->address(loc), size);
+    Dbt* r = new Dbt(this->address(loc), size);
     return r;
 }
 
@@ -211,14 +212,10 @@ void HeapTable::close(){
 }
 
 Handle HeapTable::insert(const ValueDict *row){
-	Handle handle;
-	Dbt* dbt;
-	dbt = marshal(row);
 	open();
-	
-	
-	
-	return handle;
+	ValueDict* validatedDict = validate(row);
+
+	return append(validatedDict);
 }
 
 Handles* HeapTable::select(const ValueDict* where) {
@@ -234,6 +231,66 @@ Handles* HeapTable::select(const ValueDict* where) {
     }
     delete block_ids;
     return handles;
+}
+
+
+ValueDict* HeapTable::validate(const ValueDict *row){
+	ValueDict* full_row;
+	//for(int i = 0;i < (int)column_attributes.size();i++){
+	/*for(ColumnAttribute columnAttri : this->column_attributes){
+		Value val;
+		ColumnAttribute colName = columnAttri;
+		if(row->find(columnAttri) != 5){
+			throw "don't know how to handle NULLs, defaults, etc. yet";
+			return nullptr;
+		}
+		val = Value(row[columnAttri]);
+		
+		full_row[columnAttri] = val;
+	}*/
+	ValueDict::const_iterator itr;
+	for(itr = row->begin();itr != row->end();itr++){
+		itr->first;
+		bool existence = false;
+		for(ColumnAttribute columnAttri : this->column_attributes){
+			if(itr->second.data_type == columnAttri.get_data_type()){
+				existence = true;
+			}
+		}
+		if(!existence){
+			throw "don't know how to handle NULLs, defaults, etc. yet";
+			return nullptr;
+		}
+		full_row->insert(pair<Identifier, Value>(itr->first,itr->second));
+	}
+	return full_row; 
+}
+
+Handle HeapTable::append(const ValueDict *row){
+	RecordID recId;
+	Handle handle;
+	BlockID lastBlockId = this->file.get_last_block_id();
+	Dbt *data = marshal(row);
+	SlottedPage * block = this->file.get(lastBlockId);
+	try{
+		recId = block->add(data);
+	}catch(DbBlockNoRoomError &e){
+		block = this->file.get_new();
+		recId = block->add(data);
+	}
+	
+	
+	/*DbBlock* db_block = (DbBlock*)data->get_data();
+	this->file.put(db_block);
+	delete db_block;*/
+	this->file.put(block);
+	delete data;
+	//this might be a bad delete (the block delete)
+	delete block;
+	
+	handle.first = lastBlockId;
+	handle.second = recId;
+	return handle;
 }
 
 // return the bits to go into the file
