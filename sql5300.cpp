@@ -33,11 +33,11 @@ string stringToUpper(string oString){
 void init_env(string envdir){
     //use the path argument to open up the DB environment
 	//if it isn't already open
-    DbEnv *env(0U);
+    DbEnv *env = new DbEnv(0U);
     env->set_message_stream(&cout);
 	env->set_error_stream(&cerr);
     try{
-	    env->open(envdir.c_str(), DB_CREATE | DB_INIT_MPOOL, 0);
+        env->open(envdir.c_str(), DB_CREATE | DB_INIT_MPOOL, 0);
     } catch (DbException& e){
         cerr << "sql5300: create db env error: " << e.what() << endl;
         exit(1);
@@ -76,7 +76,7 @@ int main(int argc, char *argv[]) {
         }
 
         if(query == "test"){
-            test_slottedpage();
+            cout << "test_slottedpage: " << (test_slottedpage() ? "ok" : "failed") << endl;
             //cout << "test_heap_storage: " << (test_heap_storage() ? "ok" : "failed") << endl;
             continue;
         }

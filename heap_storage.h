@@ -177,4 +177,4 @@ protected:
 };
 
 bool test_heap_storage();
-void test_slottedpage();
+bool test_slottedpage();

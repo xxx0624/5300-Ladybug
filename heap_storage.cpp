@@ -10,23 +10,41 @@ using namespace std;
 typedef u_int16_t u16;
 typedef u_int32_t u32;
 
-void test_slottedpage(){
+bool test_slottedpage(){
+    bool same = true;
+
     char block[DbBlock::BLOCK_SZ];
     Dbt dbtBlock(block, DbBlock::BLOCK_SZ);
     SlottedPage page(dbtBlock, 1, true);
 
-    char rec1[] = "hello world";
+    char rec1[] = "hello world1";
     Dbt dbtRec1(rec1, sizeof(rec1));
 
     RecordID recID = page.add(&dbtRec1);
     Dbt *record = page.get(recID);
-    cout << (char*)record->get_data() << endl;
+    if(strcmp((char*)record->get_data(), rec1) != 0){
+        same = false;
+        cerr << "From DB:" << (char*)record->get_data() << "/" << "Raw Data:" << rec1 << endl;
+    }
+
+    char rec2[] = "hello world(2)";
+    Dbt dbtRec2(rec2, sizeof(rec2));
+    recID = page.add(&dbtRec2);
+    record = page.get(recID);
+    if(strcmp((char*)record->get_data(), rec2) != 0){
+        same = false;
+        cerr << "From DB:" << (char*)record->get_data() << "/" << "Raw Data:" << rec2 << endl;
+    }
+    return same;
 }
 
 bool test_heap_storage() {
 	cout << "hello test" << endl;
 	return true;
 }
+
+/*****************************************SlottedPage***************************************************************/
+
 
 SlottedPage::SlottedPage(Dbt &block, BlockID block_id, bool is_new) : DbBlock(block, block_id, is_new) {
     if (is_new) {
