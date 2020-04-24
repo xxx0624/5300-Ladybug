@@ -12,7 +12,7 @@ typedef u_int32_t u32;
 
 
 bool test_slottedpage(){
-    bool same = true;
+    bool ok = true;
 
     char block[DbBlock::BLOCK_SZ];
     Dbt dbtBlock(block, DbBlock::BLOCK_SZ);
@@ -24,7 +24,7 @@ bool test_slottedpage(){
     RecordID recID = page.add(&dbtRec1);
     Dbt *record = page.get(recID);
     if(strcmp((char*)record->get_data(), rec1) != 0){
-        same = false;
+        ok = false;
         cerr << "From DB:" << (char*)record->get_data() << "/" << "Raw Data:" << rec1 << endl;
     }
 
@@ -35,7 +35,7 @@ bool test_slottedpage(){
     RecordID rec2ID = recID;
     record = page.get(recID);
     if(strcmp((char*)record->get_data(), rec2) != 0){
-        same = false;
+        ok = false;
         cerr << "From DB:" << (char*)record->get_data() << "/" << "Raw Data:" << rec2 << endl;
     }
 
@@ -45,7 +45,7 @@ bool test_slottedpage(){
     recID = page.add(&dbtRec3);
     record = page.get(recID);
     if(strcmp((char*)record->get_data(), rec3) != 0){
-        same = false;
+        ok = false;
         cerr << "From DB:" << (char*)record->get_data() << "/" << "Raw Data:" << rec3 << endl;
     }
     
@@ -55,7 +55,7 @@ bool test_slottedpage(){
     page.put(rec2ID, newDbtRec1);
     record = page.get(rec2ID);
     if(strcmp((char*)record->get_data(), newRec1) != 0){
-        same = false;
+        ok = false;
         cerr << "From DB:" << (char*)record->get_data() << "/" << "Raw Data:" << newRec1 << endl;
     }
     
@@ -65,20 +65,20 @@ bool test_slottedpage(){
     page.put(rec2ID, newDbtRec2);
     record = page.get(rec2ID);
     if(strcmp((char*)record->get_data(), newRec2) != 0){
-        same = false;
+        ok = false;
         cerr << "From DB:" << (char*)record->get_data() << "/" << "Raw Data:" << newRec2 << endl;
     }
 
-    return same;
+    return ok;
 }
 
 bool test_heapfile(){
     HeapFile* heapfile = new HeapFile("test");
-    bool same = true;
+    bool ok = true;
 
     heapfile->create();
     if(heapfile->get_last_block_id() != 1){
-        same = false;
+        ok = false;
     }
 
     for(int i = 1; i <= 9; i ++){
@@ -86,23 +86,59 @@ bool test_heapfile(){
     }
 
     if(heapfile->get_last_block_id() != 10){
-        same = false;
+        ok = false;
     }
 
     SlottedPage *page = heapfile->get(5U);
     heapfile->put(page);
     if(heapfile->get_last_block_id() != 10){
-        same = false;
+        ok = false;
     }
 
     heapfile->drop();
 
-    return same;
+    return ok;
 }
 
+// TODO
 bool test_heap_storage() {
-	cout << "hello test" << endl;
-	return true;
+	ColumnNames column_names;
+	column_names.push_back("a");
+	column_names.push_back("b");
+	ColumnAttributes column_attributes;
+	ColumnAttribute ca(ColumnAttribute::INT);
+	column_attributes.push_back(ca);
+	ca.set_data_type(ColumnAttribute::TEXT);
+	column_attributes.push_back(ca);
+    HeapTable table1("_test_create_drop_cpp", column_names, column_attributes);
+    table1.create();
+    std::cout << "create ok" << std::endl;
+    table1.drop();  // drop makes the object unusable because of BerkeleyDB restriction -- maybe want to fix this some day
+    std::cout << "drop ok" << std::endl;
+
+    HeapTable table("_test_data_cpp", column_names, column_attributes);
+    table.create_if_not_exists();
+    std::cout << "create_if_not_exsts ok" << std::endl;
+
+    ValueDict row;
+    row["a"] = Value(12);
+    row["b"] = Value("Hello!");
+    std::cout << "try insert" << std::endl;
+    table.insert(&row);
+    std::cout << "insert ok" << std::endl;
+    Handles* handles = table.select();
+    std::cout << "select ok " << handles->size() << std::endl;
+    ValueDict *result = table.project((*handles)[0]);
+    std::cout << "project ok" << std::endl;
+    Value value = (*result)["a"];
+    if (value.n != 12)
+    	return false;
+    value = (*result)["b"];
+    if (value.s != "Hello!")
+		return false;
+    table.drop();
+
+    return true;
 }
 
 /*****************************************SlottedPage***************************************************************/
@@ -350,7 +386,7 @@ void HeapTable::create(){
 	this->file.create();
 }
 
-/** @brief same as create but tests if the object doesn't exist first
+/** @brief ok as create but tests if the object doesn't exist first
     */
 void HeapTable::create_if_not_exists(){
 	try{
