@@ -75,9 +75,18 @@ int main(int argc, char *argv[]) {
             break;
         }
 
-        if(query == "test"){
+        if(query == "test dbblock"){
             cout << "test_slottedpage: " << (test_slottedpage() ? "ok" : "failed") << endl;
-            //cout << "test_heap_storage: " << (test_heap_storage() ? "ok" : "failed") << endl;
+            continue;
+        }
+
+        if(query == "test dbfile"){
+            cout << "test_heapfile: " << (test_heapfile() ? "ok" : "failed") << endl;
+            continue;
+        }
+
+        if(query == "test dbtable"){
+            cout << "test_heap_storage: " << (test_heap_storage() ? "ok" : "failed") << endl;
             continue;
         }
 

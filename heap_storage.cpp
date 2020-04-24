@@ -72,6 +72,14 @@ bool test_slottedpage(){
     return same;
 }
 
+bool test_heapfile(){
+    HeapFile* heapfile = new HeapFile("test");
+    bool same = true;
+
+    heapfile->create();
+    return same;
+}
+
 bool test_heap_storage() {
 	cout << "hello test" << endl;
 	return true;
@@ -223,7 +231,7 @@ bool SlottedPage::has_room(u16 size){
 /*****************************************Heap File***************************************************************/
 
 void HeapFile::create(void){
-    db_open(DB_CREATE|DB_INIT_MPOOL);
+    db_open(DB_CREATE|DB_EXCL);
     get_new();
 }
 
@@ -245,8 +253,13 @@ void HeapFile::db_open(uint flags) {
     if(!this->closed){
         return ;
     }
-    this->db.set_re_len(DbBlock::BLOCK_SZ);
-    this->db.open(nullptr, this->dbfilename.c_str(), nullptr, DB_RECNO, flags, 0644);
+    try{
+        this->db.set_re_len(DbBlock::BLOCK_SZ);
+        this->db.open(NULL, this->dbfilename.c_str(), NULL, DB_RECNO, flags, 0644);
+    } catch(exception &e) {
+        cerr << "db open failed: " << e.what() << endl;
+        exit(-1);
+    }
     BlockIDs *allIDs = block_ids();
     this->last = flags ? 0:allIDs->size();
     this->closed = false;

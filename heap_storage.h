@@ -178,3 +178,4 @@ protected:
 
 bool test_heap_storage();
 bool test_slottedpage();
+bool test_heapfile();
