@@ -77,6 +77,26 @@ bool test_heapfile(){
     bool same = true;
 
     heapfile->create();
+    if(heapfile->get_last_block_id() != 1){
+        same = false;
+    }
+
+    for(int i = 1; i <= 9; i ++){
+        heapfile->get_new();
+    }
+
+    if(heapfile->get_last_block_id() != 10){
+        same = false;
+    }
+
+    SlottedPage *page = heapfile->get(5U);
+    heapfile->put(page);
+    if(heapfile->get_last_block_id() != 10){
+        same = false;
+    }
+
+    heapfile->drop();
+
     return same;
 }
 
@@ -237,7 +257,8 @@ void HeapFile::create(void){
 
 void HeapFile::drop(void){
     close();
-    this->db.remove(this->dbfilename.c_str(), nullptr, 0);
+    Db db(_DB_ENV, 0);
+    db.remove(this->dbfilename.c_str(), nullptr, 0);
 }
 
 void HeapFile::open(void){
@@ -245,6 +266,9 @@ void HeapFile::open(void){
 }
 
 void HeapFile::close(void){
+    if(this->closed){
+        return ;
+    }
     this->closed = true;
     this->db.close(0);
 }
@@ -273,7 +297,7 @@ SlottedPage* HeapFile::get_new(void) {
     memset(block, 0, sizeof(block));
     Dbt data(block, sizeof(block));
 
-    int block_id = ++this->last;
+    BlockID block_id = ++this->last;
     Dbt key(&block_id, sizeof(block_id));
 
     // write out an empty block and read it back in so Berkeley DB is managing the memory
@@ -287,13 +311,18 @@ SlottedPage* HeapFile::get(BlockID block_id){
     Dbt key(&block_id, sizeof(block_id));
     Dbt data;
     this->db.get(nullptr, &key, &data, 0);
-    return new SlottedPage(data, block_id);
+    return new SlottedPage(data, block_id, false);
 }
 
 void HeapFile::put(DbBlock *block){
-    u16 block_id = block->get_block_id();
+    BlockID block_id = block->get_block_id();
     Dbt key(&block_id, sizeof(block_id));
-    this->db.put(nullptr, &key, block->get_block(), 0);
+    try{
+        this->db.put(nullptr, &key, block->get_block(), 0);
+    } catch(exception &e) {
+        cerr << "db put block failed: " << e.what() << endl;
+        exit(-1);
+    } 
 }
 
 BlockIDs* HeapFile::block_ids(){
