@@ -17,6 +17,8 @@
 using namespace std;
 
 
+DbEnv *_DB_ENV;
+
 /** @brief convert string into Uppercase
  *  @param the string needs to be converted
  *  @return updated string
@@ -26,6 +28,21 @@ string stringToUpper(string oString){
         oString[i] = toupper(oString[i]);
     }
     return oString;
+}
+
+void init_env(string envdir){
+    //use the path argument to open up the DB environment
+	//if it isn't already open
+    DbEnv *env(0U);
+    env->set_message_stream(&cout);
+	env->set_error_stream(&cerr);
+    try{
+	    env->open(envdir.c_str(), DB_CREATE | DB_INIT_MPOOL, 0);
+    } catch (DbException& e){
+        cerr << "sql5300: create db env error: " << e.what() << endl;
+        exit(1);
+    }
+    _DB_ENV = env;
 }
 
 /**
@@ -41,18 +58,7 @@ int main(int argc, char *argv[]) {
     const char *home = getenv("HOME");
 	string envdir = string(home) + "/" + argv[1];
     cout << "(sqlshell: running with database environment at " + envdir + ")" << endl;
-
-	//use the path argument to open up the DB environment
-	//if it isn't already open
-    DbEnv env(0U);
-	env.set_message_stream(&cout);
-	env.set_error_stream(&cerr);
-    try{
-	    env.open(envdir.c_str(), DB_CREATE | DB_INIT_MPOOL, 0);
-    } catch (DbException& e){
-        cerr << "sql5300: create db env error: " << e.what() << endl;
-        exit(1);
-    }
+    init_env(envdir);
 
 	//main body of program that takes input and returns
 	//SQL parsed text back if the input is an SQL command 
@@ -70,7 +76,8 @@ int main(int argc, char *argv[]) {
         }
 
         if(query == "test"){
-            cout << "test_heap_storage: " << (test_heap_storage() ? "ok" : "failed") << endl;
+            test_slottedpage();
+            //cout << "test_heap_storage: " << (test_heap_storage() ? "ok" : "failed") << endl;
             continue;
         }
 
@@ -91,6 +98,6 @@ int main(int argc, char *argv[]) {
         }
         delete result;
     }
-    env.close(0U);
+    _DB_ENV->close(0U);
     return EXIT_SUCCESS;
 }

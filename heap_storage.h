@@ -81,7 +81,9 @@ protected:
  */
 class HeapFile : public DbFile {
 public:
-    HeapFile(std::string name);
+    HeapFile(std::string name):DbFile(name), dbfilename(""), last(0), closed(true), db(_DB_ENV, 0){
+        this->dbfilename = this->name + ".db";
+    }
 
     virtual ~HeapFile() {}
 
@@ -175,3 +177,4 @@ protected:
 };
 
 bool test_heap_storage();
+void test_slottedpage();

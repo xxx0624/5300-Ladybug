@@ -10,6 +10,18 @@ using namespace std;
 typedef u_int16_t u16;
 typedef u_int32_t u32;
 
+void test_slottedpage(){
+    char block[DbBlock::BLOCK_SZ];
+    Dbt dbtBlock(block, DbBlock::BLOCK_SZ);
+    SlottedPage page(dbtBlock, 1, true);
+
+    char rec1[] = "hello world";
+    Dbt dbtRec1(rec1, sizeof(rec1));
+
+    RecordID recID = page.add(&dbtRec1);
+    Dbt *record = page.get(recID);
+    cout << (char*)record->get_data() << endl;
+}
 
 bool test_heap_storage() {
 	cout << "hello test" << endl;
@@ -161,10 +173,6 @@ bool SlottedPage::has_room(u16 size){
 * HeapFile Class
 */
 
-HeapFile::HeapFile(string name):DbFile(name), dbfilename(""), last(0), closed(true), db(_DB_ENV, 0) {
-    this->dbfilename = this->name + ".db";
-}
-
 void HeapFile::create(void){
     db_open(DB_CREATE|DB_INIT_MPOOL);
     get_new();
@@ -315,7 +323,7 @@ Handles* HeapTable::select(const ValueDict* where) {
     *  @return rows that can be inserted
     */
 ValueDict* HeapTable::validate(const ValueDict *row){
-	ValueDict* full_row;
+	ValueDict* full_row = new ValueDict();
 	//for(int i = 0;i < (int)column_attributes.size();i++){
 	/*for(ColumnAttribute columnAttri : this->column_attributes){
 		Value val;
