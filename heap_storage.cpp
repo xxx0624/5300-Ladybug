@@ -181,16 +181,23 @@ SlottedPage* HeapFile::get_new(void) {
 
 
 /*****************************************Heap Table***************************************************************/
-//todo: HEAPTABLE METHODS insert method
+
+/** @brief Constructor for HeapTable that initializes variables including HeapFile
+    *  @param  Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes
+    */
 HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes) : 
 					DbRelation(table_name, column_names, column_attributes),
 					file(table_name){
 }
 
+/** @brief Call create on file object HeapTable holds
+    */
 void HeapTable::create(){
 	this->file.create();
 }
 
+/** @brief same as create but tests if the object doesn't exist first
+    */
 void HeapTable::create_if_not_exists(){
 	try{
 		this->file.open();
@@ -198,19 +205,30 @@ void HeapTable::create_if_not_exists(){
 		create();
 	}
 }
-
+/** @brief Calls the destructor on the HeapFile the HeapTable contains
+    */
 void HeapTable::drop(){
 	this->file.~HeapFile();
 }
 
+/** Opens the HeapFile the HeapTable contains for insert, 
+  * update, delete, select, and project methods
+    */
 void HeapTable::open(){
 	this->file.open();
 }
 
+/** Closes the HeapFile the HeapTable contains, temporarily disabling insert, 
+  * update, delete, select, and project methods
+    */
 void HeapTable::close(){
 	this->file.close();
 }
 
+/** @brief inserts a row into the table
+    *  @param  ValueDict row (specifying the type and value)
+    *  @return Handle to the record id and block id of insertion
+    */
 Handle HeapTable::insert(const ValueDict *row){
 	open();
 	ValueDict* validatedDict = validate(row);
@@ -218,6 +236,10 @@ Handle HeapTable::insert(const ValueDict *row){
 	return append(validatedDict);
 }
 
+/** @brief corresponds to the SQL query SELECT * FROM...WHERE. 
+    *  @param  ValueDict representing a SQL WHERE clause
+    *  @return Handles to the matching rows
+    */
 Handles* HeapTable::select(const ValueDict* where) {
     Handles* handles = new Handles();
     BlockIDs* block_ids = file.block_ids();
@@ -233,7 +255,10 @@ Handles* HeapTable::select(const ValueDict* where) {
     return handles;
 }
 
-
+/** @brief Check if the given row can be inserted 
+    *  @param  ValueDict representing the row to be inserted
+    *  @return rows that can be inserted
+    */
 ValueDict* HeapTable::validate(const ValueDict *row){
 	ValueDict* full_row;
 	//for(int i = 0;i < (int)column_attributes.size();i++){
@@ -266,6 +291,10 @@ ValueDict* HeapTable::validate(const ValueDict *row){
 	return full_row; 
 }
 
+/** @brief Assumes row is fully fleshed-out. Appends a record to the file. 
+    *  @param  ValueDict representing a row
+    *  @return Handles to the block and record id values where it was appended
+    */
 Handle HeapTable::append(const ValueDict *row){
 	RecordID recId;
 	Handle handle;
