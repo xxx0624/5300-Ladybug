@@ -100,7 +100,6 @@ bool test_heapfile(){
     return ok;
 }
 
-// TODO
 bool test_heap_storage() {
 	ColumnNames column_names;
 	column_names.push_back("a");
@@ -302,11 +301,8 @@ void HeapFile::open(void){
 }
 
 void HeapFile::close(void){
-    if(this->closed){
-        return ;
-    }
-    this->closed = true;
     this->db.close(0);
+    this->closed = true;
 }
 
 void HeapFile::db_open(uint flags) {
@@ -318,12 +314,11 @@ void HeapFile::db_open(uint flags) {
         this->db.open(NULL, this->dbfilename.c_str(), NULL, DB_RECNO, flags, 0644);
     } catch(exception &e) {
         cerr << "db open failed: " << e.what() << endl;
-        exit(-1);
     }
-    BlockIDs *allIDs = block_ids();
-    this->last = flags ? 0:allIDs->size();
+    DB_BTREE_STAT* stat;
+    this->db.stat(nullptr, &stat, DB_FAST_STAT);
+    this->last = flags ? 0:stat->bt_ndata;
     this->closed = false;
-    delete allIDs;
 }
 
 // Allocate a new block for the database file.
@@ -372,8 +367,9 @@ BlockIDs* HeapFile::block_ids(){
 
 /*****************************************Heap Table***************************************************************/
 
-/** @brief  Constructor for HeapTable that initializes variables including HeapFile
- *  @param  Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes
+/** 
+ * @brief  Constructor for HeapTable that initializes variables including HeapFile
+ * @param  Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes
  */
 HeapTable::HeapTable(Identifier table_name, ColumnNames column_names, ColumnAttributes column_attributes) : 
 					DbRelation(table_name, column_names, column_attributes),
@@ -399,7 +395,7 @@ void HeapTable::create_if_not_exists(){
 /** @brief Calls the destructor on the HeapFile the HeapTable contains
     */
 void HeapTable::drop(){
-	this->file.~HeapFile();
+	this->file.drop();
 }
 
 /** Opens the HeapFile the HeapTable contains for insert, 
@@ -421,9 +417,8 @@ void HeapTable::close(){
     *  @return Handle to the record id and block id of insertion
     */
 Handle HeapTable::insert(const ValueDict *row){
-	open();
+	this->open();
 	ValueDict* validatedDict = validate(row);
-
 	return append(validatedDict);
 }
 
@@ -432,10 +427,11 @@ Handle HeapTable::insert(const ValueDict *row){
     *  @return Handles to the matching rows
     */
 Handles* HeapTable::select(const ValueDict* where) {
+    this->open();
     Handles* handles = new Handles();
-    BlockIDs* block_ids = file.block_ids();
+    BlockIDs* block_ids = this->file.block_ids();
     for (auto const& block_id: *block_ids) {
-        SlottedPage* block = file.get(block_id);
+        SlottedPage* block = this->file.get(block_id);
         RecordIDs* record_ids = block->ids();
         for (auto const& record_id: *record_ids)
             handles->push_back(Handle(block_id, record_id));
@@ -452,34 +448,20 @@ Handles* HeapTable::select(const ValueDict* where) {
     */
 ValueDict* HeapTable::validate(const ValueDict *row){
 	ValueDict* full_row = new ValueDict();
-	//for(int i = 0;i < (int)column_attributes.size();i++){
-	/*for(ColumnAttribute columnAttri : this->column_attributes){
-		Value val;
-		ColumnAttribute colName = columnAttri;
-		if(row->find(columnAttri) != 5){
-			throw "don't know how to handle NULLs, defaults, etc. yet";
-			return nullptr;
-		}
-		val = Value(row[columnAttri]);
-		
-		full_row[columnAttri] = val;
-	}*/
-	ValueDict::const_iterator itr;
-	for(itr = row->begin();itr != row->end();itr++){
-		itr->first;
+	for(ValueDict::const_iterator itr = row->begin();itr != row->end();itr++){
 		bool existence = false;
 		for(ColumnAttribute columnAttri : this->column_attributes){
 			if(itr->second.data_type == columnAttri.get_data_type()){
 				existence = true;
+                break;
 			}
 		}
 		if(!existence){
-			throw "don't know how to handle NULLs, defaults, etc. yet";
-			return nullptr;
+			throw DbRelationError("don't know how to handle NULLs, defaults, etc. yet");
 		}
 		full_row->insert(pair<Identifier, Value>(itr->first,itr->second));
 	}
-	return full_row; 
+	return full_row;
 }
 
 /** @brief Assumes row is fully fleshed-out. Appends a record to the file. 
@@ -490,25 +472,24 @@ Handle HeapTable::append(const ValueDict *row){
 	RecordID recId;
 	Handle handle;
 	BlockID lastBlockId = this->file.get_last_block_id();
-	Dbt *data = marshal(row);
-	SlottedPage * block = this->file.get(lastBlockId);
+	Dbt* data = marshal(row);
+	SlottedPage* block = this->file.get(lastBlockId);
 	try{
 		recId = block->add(data);
 	}catch(DbBlockNoRoomError &e){
 		block = this->file.get_new();
-		recId = block->add(data);
+        try{
+		    recId = block->add(data);
+        } catch(DbBlockNoRoomError &e){
+            cerr << "data is too large to be hold in one block" << endl;
+            exit(-1);
+        }
 	}
 	
-	
-	/*DbBlock* db_block = (DbBlock*)data->get_data();
-	this->file.put(db_block);
-	delete db_block;*/
 	this->file.put(block);
 	delete data;
-	//this might be a bad delete (the block delete)
-	delete block;
-	
-	handle.first = lastBlockId;
+    delete block;
+	handle.first = block->get_block_id();
 	handle.second = recId;
 	return handle;
 }

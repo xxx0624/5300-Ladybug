@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
         }
 
         if(query == "test dbtable"){
-            cout << "test_heap_storage: " << (test_heap_storage() ? "ok" : "failed") << endl;
+            cout << "test_heap_storage: \n" << (test_heap_storage() ? "ok" : "failed") << endl;
             continue;
         }
 
