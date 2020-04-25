@@ -80,6 +80,11 @@ int main(int argc, char *argv[]) {
             continue;
         }
 
+        if(query == "test2"){
+            cout << "test_slotted_page: \n" << (test_slotted_page() ? "ok" : "failed") << endl;
+            continue;
+        }
+
         // parse the given query, if invalid stop and if valid translate
         hsql::SQLParserResult *result = hsql::SQLParser::parseSQLString(query);
         if (!result->isValid()) {
