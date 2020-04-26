@@ -1,3 +1,8 @@
+/**
+ * @file   heap_storage.cpp
+ * @brief  the implementation file for HeapTable, HeapFile and SlottedPage classes
+ * @authors Ethan Guttman, XingZheng
+ */
 #include "heap_storage.h"
 #include <cstring>
 #include <exception>
@@ -115,7 +120,10 @@ bool test_slotted_page() {
     return true;
 }
 
-//instructor test code
+/**
+ * Testing function for heap storage.
+ * @return true if testing succeeded, false otherwise 
+ */
 bool test_heap_storage() {
 	ColumnNames column_names;
 	column_names.push_back("a");
@@ -148,11 +156,13 @@ bool test_heap_storage() {
     ValueDict *result = table.project((*handles)[0]);
     cout << "project ok" << endl;
     Value value = (*result)["a"];
-    if (value.n != 12)
+    if (value.n != 12){
     	return false;
+	}
     value = (*result)["b"];
-    if (value.s != "Hello!")
+    if (value.s != "Hello!"){
 		return false;
+	}
     table.drop();
     return true;
 }
@@ -552,7 +562,7 @@ Handle HeapTable::append(const ValueDict *row){
 }
 
 /**
- * Return the bits to go into the file
+ * Return the bits to go into the fil
  * caller responsible for freeing the returned Dbt and its enclosed ret->get_data().
  * @param row the data needed to be marshal
  */
@@ -584,6 +594,11 @@ Dbt* HeapTable::marshal(const ValueDict* row) {
     return data;
 }
 
+/**
+ * Return the values from the block id and record id the handle paramater holds
+ * returned value must be deallocated by caller
+ * @param Handle holding the record id and block id of desired data
+ */
 ValueDict* HeapTable::project(Handle handle){
     ValueDict * row;
 	Dbt* data;
@@ -592,6 +607,8 @@ ValueDict* HeapTable::project(Handle handle){
 	SlottedPage * block = this->file.get(blockId);
 	data = block->get(recId);
 	row = unmarshal(data);
+	delete block;
+	delete data;
 	return row;
 }
 
@@ -600,6 +617,11 @@ ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names){
     return NULL;
 }
 
+/**
+ * Return the fields decoded from the bits
+ * caller responsible for freeing the returned ValueDict
+ * @param Dbt holding the bits representing the data
+ */
 ValueDict* HeapTable::unmarshal(Dbt *data){
     ValueDict* row = new ValueDict();
 	char *block_bytes = (char*)data->get_data();
@@ -615,11 +637,12 @@ ValueDict* HeapTable::unmarshal(Dbt *data){
         } else if (ca.get_data_type() == ColumnAttribute::DataType::TEXT) {
             uint size = *(u16*) (block_bytes + offset);
 			offset += sizeof(u16);
-			char* s = new char[size];// = *(string*) (block_bytes + offset + size);
+			char* s = new char[size + 1];
 			memcpy(s, block_bytes+offset, size);
 			value = Value(s);
 			(*row)[column_name] = value;
 			offset += size;
+			delete [] s;
         } else {
             throw DbRelationError("Only know how to unmarshal INT and TEXT");
         }
