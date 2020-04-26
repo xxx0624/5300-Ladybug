@@ -639,6 +639,7 @@ ValueDict* HeapTable::unmarshal(Dbt *data){
 			offset += sizeof(u16);
 			char* s = new char[size + 1];
 			memcpy(s, block_bytes+offset, size);
+			s[size] = '\0';
 			value = Value(s);
 			(*row)[column_name] = value;
 			offset += size;
