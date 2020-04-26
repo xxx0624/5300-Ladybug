@@ -141,16 +141,15 @@ bool test_heap_storage() {
     cout << "try select" << endl;
     Handles* handles = table.select();
     cout << "select ok " << handles->size() << endl;
-    // TODO
-    // cout << "try project" << endl;
-    // ValueDict *result = table.project((*handles)[0]);
-    // cout << "project ok" << endl;
-    // Value value = (*result)["a"];
-    // if (value.n != 12)
-    // 	return false;
-    // value = (*result)["b"];
-    // if (value.s != "Hello!")
-	// 	return false;
+    cout << "try project" << endl;
+    ValueDict *result = table.project((*handles)[0]);
+    cout << "project ok" << endl;
+    Value value = (*result)["a"];
+    if (value.n != 12)
+    	return false;
+    value = (*result)["b"];
+    if (value.s != "Hello!")
+		return false;
     table.drop();
 
     return true;
@@ -580,9 +579,15 @@ Dbt* HeapTable::marshal(const ValueDict* row) {
     return data;
 }
 
-// TODO
 ValueDict* HeapTable::project(Handle handle){
-    return NULL;
+    ValueDict * row;
+	Dbt* data;
+	u32 blockId = handle.first;
+	u16 recId = handle.second;
+	SlottedPage * block = this->file.get(blockId);
+	data = block->get(recId);
+	row = unmarshal(data);
+	return row;
 }
 
 // TODO
@@ -590,9 +595,31 @@ ValueDict* HeapTable::project(Handle handle, const ColumnNames *column_names){
     return NULL;
 }
 
-// TODO
 ValueDict* HeapTable::unmarshal(Dbt *data){
-    return NULL;
+    ValueDict* row = new ValueDict();
+	char *block_bytes = (char*)data->get_data();
+	uint offset = 0;
+	uint col_num = 0;
+	for (auto const& column_name: this->column_names) {
+		ColumnAttribute ca = this->column_attributes[col_num++];
+		Value value;
+		if (ca.get_data_type() == ColumnAttribute::DataType::INT) {
+			value = Value(*(u32*) (block_bytes + offset));
+			(*row)[column_name] = value;
+			offset += 4;
+        } else if (ca.get_data_type() == ColumnAttribute::DataType::TEXT) {
+            uint size = *(u16*) (block_bytes + offset);
+			offset += sizeof(u16);
+			char* s = new char[size];// = *(string*) (block_bytes + offset + size);
+			memcpy(s, block_bytes+offset, size);
+			value = Value(s);
+			(*row)[column_name] = value;
+			offset += size;
+        } else {
+            throw DbRelationError("Only know how to unmarshal INT and TEXT");
+        }
+	}
+	return row;
 }
 
 // TODO
